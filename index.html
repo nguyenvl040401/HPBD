@@ -523,6 +523,10 @@
       class FloatingPhoto {
         constructor(imgUrl, targetX, targetY, targetRot, delay) {
           this.img = new Image();
+          this.isError = false; // 👈 Thêm biến cờ đánh dấu lỗi
+          this.img.onerror = () => {
+            this.isError = true; // Nếu nạp ảnh lỗi (404), đánh dấu ngay
+          };
           this.img.src = imgUrl;
           this.targetX = targetX;
           this.targetY = targetY;
