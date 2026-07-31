@@ -125,7 +125,8 @@
           "Mọi điều tốt đẹp nhất sẽ đến với bạn",
         ],
 
-        // Tối đa 4 ảnh. Nếu thêm ảnh, hãy nhập đường dẫn (VD: ["img1.jpg", "img2.jpg"])
+        // Thêm đường dẫn ảnh vào mảng nếu muốn hiển thị ảnh gallery (Tối đa 4 ảnh)
+        // VD: images: ["img1.jpg", "img2.jpg"]
         images: [],
 
         fontScript: "'Dancing Script', cursive",
@@ -678,7 +679,6 @@
         photoObjects = [];
         if (!CONFIG.images || CONFIG.images.length === 0) return;
 
-        const isMobile = W < 600;
         const coords = [
           { x: W * 0.18, y: H * 0.25, rot: -0.12, delay: 0.2 },
           { x: W * 0.82, y: H * 0.25, rot: 0.15, delay: 0.4 },
@@ -994,7 +994,6 @@
             if (letters[i].phase !== "settled") allSettled = false;
           }
 
-          // Kiểm tra nếu mảng chữ rỗng hoặc tất cả đã hoàn tất
           if (
             letters.length > 0 &&
             allSettled &&
