@@ -1,0 +1,1023 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+    <title>Happy Birthday 🎁</title>
+    <!-- Google Fonts: Cormorant Garamond, Dancing Script, Noto Serif JP -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Dancing+Script:wght@500;700&family=Noto+Serif+JP:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+        background: #030509;
+        height: 100%;
+        width: 100%;
+        cursor: pointer;
+        -webkit-tap-highlight-color: transparent;
+        font-family: "Cormorant Garamond", "Noto Serif JP", serif;
+      }
+      canvas {
+        position: absolute;
+        top: 0;
+        left: 0;
+        display: block;
+      }
+
+      .hint {
+        position: absolute;
+        bottom: 240px;
+        left: 0;
+        right: 0;
+        text-align: center;
+        font-family: "Cormorant Garamond", "Noto Serif JP", serif;
+        font-size: 13px;
+        letter-spacing: 4px;
+        text-transform: uppercase;
+        color: rgba(238, 222, 196, 0.7);
+        pointer-events: none;
+        user-select: none;
+        transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        text-shadow: 0 0 12px rgba(212, 175, 55, 0.2);
+      }
+
+      .replay {
+        position: absolute;
+        bottom: 24px;
+        right: 28px;
+        font-family: "Cormorant Garamond", "Noto Serif JP", serif;
+        font-size: 13px;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        font-weight: 600;
+        color: #e5cb9f;
+        background: rgba(20, 24, 38, 0.4);
+        border: 1px solid rgba(212, 175, 55, 0.3);
+        padding: 8px 22px;
+        border-radius: 40px;
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        opacity: 0;
+        pointer-events: none;
+        transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        user-select: none;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+        z-index: 10;
+      }
+      .replay:hover {
+        background: rgba(212, 175, 55, 0.15);
+        border-color: rgba(212, 175, 55, 0.6);
+        box-shadow: 0 0 15px rgba(212, 175, 55, 0.3);
+      }
+      .replay.show {
+        opacity: 1;
+        pointer-events: auto;
+      }
+
+      .signature {
+        position: absolute;
+        bottom: 24px;
+        left: 50%; /* 👈 Đưa sang vị trí 50% chiều ngang */
+        transform: translateX(-50%); /* 👈 Căn chính giữa chuẩn xác */
+        font-family: "Cormorant Garamond", "Noto Serif JP", serif;
+        font-size: 13px;
+        letter-spacing: 1.5px;
+        color: rgba(255, 255, 255, 0.25);
+        pointer-events: none;
+        user-select: none;
+        font-style: italic;
+        transition: opacity 1s ease;
+        z-index: 10;
+        white-space: nowrap; /* 👈 Giữ cho dòng chữ không bị nhảy hàng */
+      }
+      .signature span {
+        color: rgba(212, 175, 55, 0.45);
+        font-weight: 600;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="c"></canvas>
+    <div class="hint" id="hint">✨ Chạm để mở quà ✨</div>
+    <button class="replay" id="replayBtn">↻ Xem lại</button>
+    <div class="signature">Crafted by <span>Lăng Nguyên</span></div>
+
+    <script>
+      /* ============================================================================
+   CINEMATIC LUXURY BIRTHDAY EXPERIENCE WITH FLOATING GALLERY (FIXED BOX)
+   ============================================================================ */
+
+      const CONFIG = {
+        recipientName: "Lăng Nguyên",
+        lines: [
+          "Happy Birthday",
+          "Lăng Nguyên",
+          "Mọi điều tốt đẹp nhất sẽ đến với bạn",
+        ],
+
+        // Tối đa 4 ảnh. Nếu không muốn hiện ảnh, hãy để mảng rỗng: images: []
+        images: [
+          "./img/img1.jpg",
+          "./img/img2.jpg",
+          "./img/img3.jpg",
+          "./img/img4.jpg",
+        ],
+
+        fontScript: "'Dancing Script', cursive",
+        fontSerif: "'Cormorant Garamond', 'Noto Serif JP', serif",
+        baseCharSize: 56,
+        lineGap: 75,
+
+        palette: {
+          bgTop: "#03050a",
+          bgBottom: "#0a0e1a",
+          goldLight: "#fceabb",
+          goldMid: "#f8b500",
+          goldDark: "#c2862a",
+          roseGold: "#e8a7a1",
+          champagne: "#f5e5c9",
+        },
+
+        boxSize: 120,
+        starCount: 120,
+      };
+
+      const TAU = Math.PI * 2;
+
+      const canvas = document.getElementById("c");
+      const ctx = canvas.getContext("2d", { alpha: false });
+      const hintEl = document.getElementById("hint");
+      const replayBtn = document.getElementById("replayBtn");
+
+      let dpr = 1;
+      let W = 0,
+        H = 0;
+
+      function resizeCanvas() {
+        W = window.innerWidth;
+        H = window.innerHeight;
+        dpr = Math.min(window.devicePixelRatio || 1, 2);
+        canvas.width = W * dpr;
+        canvas.height = H * dpr;
+        canvas.style.width = W + "px";
+        canvas.style.height = H + "px";
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      }
+      resizeCanvas();
+
+      const rand = (a, b) => a + Math.random() * (b - a);
+      const easeOutExpo = (t) => (t === 1 ? 1 : 1 - Math.pow(2, -10 * t));
+      const easeOutBack = (t, s = 1.70158) =>
+        1 + (s + 1) * Math.pow(t - 1, 3) + s * Math.pow(t - 1, 2);
+
+      function getBezierPoint(p0, p1, p2, p3, t) {
+        const u = 1 - t,
+          tt = t * t,
+          uu = u * u,
+          uuu = uu * u,
+          ttt = tt * t;
+        return {
+          x: uuu * p0.x + 3 * uu * t * p1.x + 3 * u * tt * p2.x + ttt * p3.x,
+          y: uuu * p0.y + 3 * uu * t * p1.y + 3 * u * tt * p2.y + ttt * p3.y,
+        };
+      }
+
+      function fitFontSize(
+        text,
+        baseSize,
+        maxWidth,
+        minSize = 14,
+        font = CONFIG.fontSerif,
+      ) {
+        let size = baseSize;
+        ctx.font = `600 ${size}px ${font}`;
+        while (size > minSize && ctx.measureText(text).width > maxWidth) {
+          size -= 1;
+          ctx.font = `600 ${size}px ${font}`;
+        }
+        return size;
+      }
+
+      // ---------- BACKGROUND ENGINE ----------
+      class BackgroundEngine {
+        constructor() {
+          this.stars = Array.from({ length: CONFIG.starCount }, () => ({
+            x: Math.random(),
+            y: Math.random(),
+            r: rand(0.4, 1.4),
+            phase: Math.random() * TAU,
+            speed: rand(0.3, 1.0),
+          }));
+        }
+
+        draw(time) {
+          const bgGrad = ctx.createLinearGradient(0, 0, 0, H);
+          bgGrad.addColorStop(0, CONFIG.palette.bgTop);
+          bgGrad.addColorStop(1, CONFIG.palette.bgBottom);
+          ctx.fillStyle = bgGrad;
+          ctx.fillRect(0, 0, W, H);
+
+          ctx.fillStyle = "#fceabb";
+          for (let i = 0; i < this.stars.length; i++) {
+            const s = this.stars[i];
+            const alpha =
+              0.15 + 0.5 * (0.5 + 0.5 * Math.sin(time * s.speed + s.phase));
+            ctx.globalAlpha = alpha;
+            ctx.beginPath();
+            ctx.arc(s.x * W, s.y * H, s.r, 0, TAU);
+            ctx.fill();
+          }
+          ctx.globalAlpha = 1.0;
+        }
+      }
+      const bgEngine = new BackgroundEngine();
+
+      // ---------- PARTICLE POOL ----------
+      class ParticlePool {
+        constructor(maxParticles = 500) {
+          this.pool = [];
+          for (let i = 0; i < maxParticles; i++) {
+            this.pool.push({
+              active: false,
+              x: 0,
+              y: 0,
+              vx: 0,
+              vy: 0,
+              size: 0,
+              color: "",
+              life: 0,
+              maxLife: 1,
+              drag: 0.96,
+              gravity: 40,
+            });
+          }
+        }
+
+        spawn(x, y, vx, vy, size, color, maxLife, drag = 0.96, gravity = 40) {
+          const p = this.pool.find((item) => !item.active);
+          if (!p) return;
+          p.active = true;
+          p.x = x;
+          p.y = y;
+          p.vx = vx;
+          p.vy = vy;
+          p.size = size;
+          p.color = color;
+          p.life = 0;
+          p.maxLife = maxLife;
+          p.drag = drag;
+          p.gravity = gravity;
+        }
+
+        updateAndDraw(dt) {
+          for (let i = 0; i < this.pool.length; i++) {
+            const p = this.pool[i];
+            if (!p.active) continue;
+            p.life += dt;
+            if (p.life >= p.maxLife) {
+              p.active = false;
+              continue;
+            }
+            p.vx *= p.drag;
+            p.vy *= p.drag;
+            p.vy += p.gravity * dt;
+            p.x += p.vx * dt;
+            p.y += p.vy * dt;
+
+            const alpha = Math.sin((p.life / p.maxLife) * Math.PI);
+            ctx.save();
+            ctx.globalAlpha = alpha * 0.8;
+            ctx.shadowColor = p.color;
+            ctx.shadowBlur = p.size * 2;
+            ctx.fillStyle = p.color;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.size, 0, TAU);
+            ctx.fill();
+            ctx.restore();
+          }
+        }
+
+        clear() {
+          this.pool.forEach((p) => (p.active = false));
+        }
+      }
+      const particlePool = new ParticlePool(500);
+
+      // ---------- 3D GIFT BOX ENGINE (CORRECTED) ----------
+      const boxState = {
+        age: 0,
+        opening: false,
+        openProgress: 0,
+        shakeIntensity: 0,
+        lidX: 0,
+        lidY: 0,
+        lidVX: 0,
+        lidVY: 0,
+        lidRot: 0,
+        lidVRot: 0,
+      };
+
+      function drawRoundedRect(x, y, w, h, r) {
+        ctx.beginPath();
+        ctx.moveTo(x + r, y);
+        ctx.arcTo(x + w, y, x + w, y + h, r);
+        ctx.arcTo(x + w, y + h, x, y + h, r);
+        ctx.arcTo(x, y + h, x, y, r);
+        ctx.arcTo(x, y, x + w, y, r);
+        ctx.closePath();
+      }
+
+      function draw3DBow(x, y, size) {
+        ctx.save();
+        ctx.translate(x, y);
+        const bowGrad = ctx.createLinearGradient(-size, -size, size, size);
+        bowGrad.addColorStop(0, "#ffe8b5");
+        bowGrad.addColorStop(0.5, "#d4af37");
+        bowGrad.addColorStop(1, "#8a640f");
+        ctx.fillStyle = bowGrad;
+
+        ctx.beginPath();
+        ctx.ellipse(
+          -size * 0.8,
+          -size * 0.3,
+          size * 0.7,
+          size * 0.38,
+          -0.3,
+          0,
+          TAU,
+        );
+        ctx.fill();
+        ctx.beginPath();
+        ctx.ellipse(
+          size * 0.8,
+          -size * 0.3,
+          size * 0.7,
+          size * 0.38,
+          0.3,
+          0,
+          TAU,
+        );
+        ctx.fill();
+
+        ctx.fillStyle = "#fff3d9";
+        ctx.beginPath();
+        ctx.arc(0, -size * 0.15, size * 0.3, 0, TAU);
+        ctx.fill();
+        ctx.restore();
+      }
+
+      function drawGiftBox(dt, time) {
+        boxState.age += dt;
+
+        const floatOffset = Math.sin(boxState.age * 1.5) * 6;
+        const breatheScale = 1 + Math.sin(boxState.age * 2.0) * 0.012;
+        const bSize = CONFIG.boxSize * breatheScale;
+        const cx = W / 2;
+        const cy = H / 2 + 30 + floatOffset;
+
+        ctx.save();
+        ctx.translate(cx, cy);
+
+        if (boxState.shakeIntensity > 0) {
+          const shakeX = (Math.random() - 0.5) * boxState.shakeIntensity * 10;
+          const shakeY = (Math.random() - 0.5) * boxState.shakeIntensity * 10;
+          ctx.translate(shakeX, shakeY);
+          boxState.shakeIntensity = Math.max(
+            0,
+            boxState.shakeIntensity - dt * 2.5,
+          );
+        }
+
+        // Đổ bóng đáy hộp
+        const shadowGrad = ctx.createRadialGradient(
+          0,
+          bSize * 0.55,
+          5,
+          0,
+          bSize * 0.55,
+          bSize * 0.85,
+        );
+        shadowGrad.addColorStop(0, "rgba(0, 0, 0, 0.6)");
+        shadowGrad.addColorStop(1, "rgba(0, 0, 0, 0)");
+        ctx.fillStyle = shadowGrad;
+        ctx.beginPath();
+        ctx.ellipse(0, bSize * 0.55, bSize * 0.7, bSize * 0.18, 0, 0, TAU);
+        ctx.fill();
+
+        const bodyW = bSize;
+        const bodyH = bSize * 0.65;
+        const bodyX = -bodyW / 2;
+        const bodyY = -bodyH / 2 + 15;
+
+        const bodyGrad = ctx.createLinearGradient(
+          bodyX,
+          bodyY,
+          bodyX + bodyW,
+          bodyY + bodyH,
+        );
+        bodyGrad.addColorStop(0, "#2a1f1d");
+        bodyGrad.addColorStop(0.3, "#4a3531");
+        bodyGrad.addColorStop(0.7, "#2a1f1d");
+        bodyGrad.addColorStop(1, "#181210");
+
+        drawRoundedRect(bodyX, bodyY, bodyW, bodyH, 12);
+        ctx.fillStyle = bodyGrad;
+        ctx.fill();
+
+        ctx.strokeStyle = "rgba(232, 167, 161, 0.2)";
+        ctx.lineWidth = 1.5;
+        drawRoundedRect(bodyX + 1, bodyY + 1, bodyW - 2, bodyH - 2, 11);
+        ctx.stroke();
+
+        const ribbonW = bodyW * 0.18;
+        const ribbonGrad = ctx.createLinearGradient(
+          -ribbonW / 2,
+          0,
+          ribbonW / 2,
+          0,
+        );
+        ribbonGrad.addColorStop(0, "#d4af37");
+        ribbonGrad.addColorStop(0.5, "#fff3d9");
+        ribbonGrad.addColorStop(1, "#aa7c11");
+        ctx.fillStyle = ribbonGrad;
+        ctx.fillRect(-ribbonW / 2, bodyY, ribbonW, bodyH);
+
+        ctx.save();
+        if (boxState.opening) {
+          ctx.translate(boxState.lidX, boxState.lidY);
+          ctx.rotate(boxState.lidRot);
+          ctx.globalAlpha = Math.max(0, 1 - boxState.openProgress * 1.2);
+        }
+
+        const lidW = bodyW * 1.08;
+        const lidH = bodyH * 0.32;
+        const lidX = -lidW / 2;
+        const lidY = bodyY - lidH + 4;
+
+        const lidGrad = ctx.createLinearGradient(
+          lidX,
+          lidY,
+          lidX + lidW,
+          lidY + lidH,
+        );
+        lidGrad.addColorStop(0, "#3a2a27");
+        lidGrad.addColorStop(0.5, "#5c433e");
+        lidGrad.addColorStop(1, "#2a1f1d");
+        drawRoundedRect(lidX, lidY, lidW, lidH, 8);
+        ctx.fillStyle = lidGrad;
+        ctx.fill();
+
+        ctx.fillStyle = ribbonGrad;
+        ctx.fillRect(-ribbonW / 2, lidY, ribbonW, lidH);
+
+        // Vẽ nơ 3D trên nắp
+        if (boxState.openProgress < 0.8) {
+          draw3DBow(0, lidY - 2, ribbonW);
+        }
+        ctx.restore();
+        ctx.restore();
+      }
+
+      function drawTag(time) {
+        if (boxState.opening) return;
+        const swing = Math.sin(time * 1.2) * 0.08;
+        const cx = W / 2 + CONFIG.boxSize * 0.38,
+          cy = H / 2 - 10;
+
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.rotate(swing);
+
+        ctx.strokeStyle = "rgba(212, 175, 55, 0.5)";
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(0, 35);
+        ctx.stroke();
+
+        ctx.font = `600 13px ${CONFIG.fontSerif}`;
+        const textW = ctx.measureText(CONFIG.recipientName).width;
+        const tagW = Math.max(90, textW + 40),
+          tagH = 34,
+          tx = -tagW / 2,
+          ty = 35;
+
+        ctx.fillStyle = "rgba(18, 22, 34, 0.9)";
+        drawRoundedRect(tx, ty, tagW, tagH, 6);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.fillStyle = "#e5cb9f";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(CONFIG.recipientName, 0, ty + tagH / 2 + 1);
+        ctx.restore();
+      }
+
+      // ---------- FLOATING PHOTO GALLERY ENGINE ----------
+      class FloatingPhoto {
+        constructor(imgUrl, targetX, targetY, targetRot, delay) {
+          this.img = new Image();
+          this.img.src = imgUrl;
+          this.targetX = targetX;
+          this.targetY = targetY;
+          this.targetRot = targetRot;
+          this.delay = delay;
+          this.reset();
+        }
+
+        reset() {
+          this.phase = "idle";
+          this.progress = 0;
+          this.timeAcc = 0;
+          this.p0 = { x: W / 2, y: H / 2 + 20 };
+          const angle = rand(-Math.PI, 0);
+          const dist = rand(150, 300);
+          this.p1 = {
+            x: W / 2 + Math.cos(angle) * dist,
+            y: H / 2 + Math.sin(angle) * dist - 80,
+          };
+          this.p2 = {
+            x: this.targetX + rand(-30, 30),
+            y: this.targetY - rand(40, 80),
+          };
+          this.p3 = { x: this.targetX, y: this.targetY };
+          this.currentPos = { ...this.p0 };
+          this.scale = 0;
+          this.alpha = 0;
+          this.rot = rand(-0.5, 0.5);
+        }
+
+        update(dt) {
+          if (this.phase === "idle") {
+            this.timeAcc += dt;
+            if (this.timeAcc >= this.delay) {
+              this.phase = "active";
+              this.progress = 0;
+            }
+            return;
+          }
+
+          if (this.phase === "active") {
+            this.progress += dt * 0.75;
+            const t = Math.min(1, this.progress);
+            const easedT = easeOutExpo(t);
+            this.currentPos = getBezierPoint(
+              this.p0,
+              this.p1,
+              this.p2,
+              this.p3,
+              easedT,
+            );
+            this.scale = easeOutBack(Math.min(1, t * 1.1));
+            this.alpha = Math.min(1, t * 2.0);
+            this.rot = this.targetRot * easedT;
+
+            if (t >= 1) {
+              this.phase = "settled";
+            }
+          }
+        }
+
+        draw(time) {
+          if (this.phase === "idle" || !this.img.complete) return;
+
+          ctx.save();
+          ctx.translate(this.currentPos.x, this.currentPos.y);
+          ctx.scale(this.scale, this.scale);
+
+          if (this.phase === "settled") {
+            const floatY = Math.sin(time * 1.5 + this.targetX) * 5;
+            const floatRot = Math.sin(time * 1.2 + this.targetY) * 0.02;
+            ctx.translate(0, floatY);
+            ctx.rotate(this.rot + floatRot);
+          } else {
+            ctx.rotate(this.rot);
+          }
+
+          const isMobile = W < 600;
+          const pw = isMobile ? 85 : 125;
+          const ph = isMobile ? 105 : 155;
+          const pad = isMobile ? 5 : 8;
+
+          ctx.shadowColor = "rgba(212, 175, 55, 0.35)";
+          ctx.shadowBlur = 20;
+          ctx.globalAlpha = this.alpha;
+
+          const frameGrad = ctx.createLinearGradient(
+            -pw / 2,
+            -ph / 2,
+            pw / 2,
+            ph / 2,
+          );
+          frameGrad.addColorStop(0, "#fceabb");
+          frameGrad.addColorStop(0.5, "#d4af37");
+          frameGrad.addColorStop(1, "#8a640f");
+
+          ctx.fillStyle = frameGrad;
+          drawRoundedRect(-pw / 2, -ph / 2, pw, ph, 10);
+          ctx.fill();
+
+          ctx.shadowBlur = 0;
+          ctx.save();
+          drawRoundedRect(
+            -pw / 2 + pad,
+            -ph / 2 + pad,
+            pw - pad * 2,
+            ph - pad * 2 - 15,
+            6,
+          );
+          ctx.clip();
+          ctx.drawImage(
+            this.img,
+            -pw / 2 + pad,
+            -ph / 2 + pad,
+            pw - pad * 2,
+            ph - pad * 2 - 15,
+          );
+          ctx.restore();
+
+          const glassGrad = ctx.createLinearGradient(
+            -pw / 2,
+            -ph / 2,
+            pw / 2,
+            ph / 2,
+          );
+          glassGrad.addColorStop(0, "rgba(255, 255, 255, 0.25)");
+          glassGrad.addColorStop(0.4, "rgba(255, 255, 255, 0.0)");
+          ctx.fillStyle = glassGrad;
+          drawRoundedRect(
+            -pw / 2 + pad,
+            -ph / 2 + pad,
+            pw - pad * 2,
+            ph - pad * 2 - 15,
+            6,
+          );
+          ctx.fill();
+
+          ctx.restore();
+        }
+      }
+
+      let photoObjects = [];
+      function buildPhotoLayout() {
+        photoObjects = [];
+        const urls = CONFIG.images.slice(0, 4);
+        if (urls.length === 0) return;
+
+        const isMobile = W < 600;
+        const cx = W / 2;
+        const cy = H / 2;
+
+        const positions = [
+          {
+            x: cx - (isMobile ? W * 0.36 : 320),
+            y: cy - (isMobile ? 140 : 160),
+            rot: -0.12,
+          },
+          {
+            x: cx + (isMobile ? W * 0.36 : 320),
+            y: cy - (isMobile ? 140 : 160),
+            rot: 0.12,
+          },
+          {
+            x: cx - (isMobile ? W * 0.34 : 300),
+            y: cy + (isMobile ? 120 : 140),
+            rot: 0.08,
+          },
+          {
+            x: cx + (isMobile ? W * 0.34 : 300),
+            y: cy + (isMobile ? 120 : 140),
+            rot: -0.08,
+          },
+        ];
+
+        urls.forEach((url, i) => {
+          const pos = positions[i % positions.length];
+          photoObjects.push(
+            new FloatingPhoto(url, pos.x, pos.y, pos.rot, 0.2 + i * 0.25),
+          );
+        });
+      }
+
+      // ---------- BEZIER TEXT ENGINE ----------
+      class BezierLetter {
+        constructor(char, targetX, targetY, font, size, delay) {
+          this.char = char;
+          this.targetX = targetX;
+          this.targetY = targetY;
+          this.font = font;
+          this.size = size;
+          this.delay = delay;
+          this.reset();
+        }
+
+        reset() {
+          this.phase = "idle";
+          this.progress = 0;
+          this.timeAcc = 0;
+          this.p0 = { x: W / 2, y: H / 2 + 40 };
+          const angle = rand(-Math.PI, 0);
+          const dist = rand(120, 280);
+          this.p1 = {
+            x: W / 2 + Math.cos(angle) * dist,
+            y: H / 2 + Math.sin(angle) * dist - 100,
+          };
+          this.p2 = {
+            x: this.targetX + rand(-40, 40),
+            y: this.targetY - rand(50, 100),
+          };
+          this.p3 = { x: this.targetX, y: this.targetY };
+          this.currentPos = { ...this.p0 };
+          this.scale = 0;
+          this.alpha = 0;
+        }
+
+        update(dt) {
+          if (this.phase === "idle") {
+            this.timeAcc += dt;
+            if (this.timeAcc >= this.delay) {
+              this.phase = "active";
+              this.progress = 0;
+            }
+            return;
+          }
+          if (this.phase === "active") {
+            this.progress += dt * 0.85;
+            const t = Math.min(1, this.progress);
+            const easedT = easeOutExpo(t);
+            this.currentPos = getBezierPoint(
+              this.p0,
+              this.p1,
+              this.p2,
+              this.p3,
+              easedT,
+            );
+            this.scale = easeOutBack(Math.min(1, t * 1.2));
+            this.alpha = Math.min(1, t * 2.0);
+
+            if (t >= 1) {
+              this.phase = "settled";
+            }
+          }
+        }
+
+        draw(time) {
+          if (this.phase === "idle") return;
+          ctx.save();
+          ctx.translate(this.currentPos.x, this.currentPos.y);
+          ctx.scale(this.scale, this.scale);
+
+          if (this.phase === "settled") {
+            const breath = Math.sin(time * 2.0 + this.targetX * 0.05) * 0.02;
+            ctx.scale(1 + breath, 1 + breath);
+          }
+
+          ctx.font = `600 ${this.size}px ${this.font}`;
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
+          ctx.globalAlpha = this.alpha;
+          ctx.shadowColor = "rgba(212, 175, 55, 0.4)";
+          ctx.shadowBlur = 10;
+
+          const textGrad = ctx.createLinearGradient(
+            0,
+            -this.size / 2,
+            0,
+            this.size / 2,
+          );
+          textGrad.addColorStop(0, "#ffffff");
+          textGrad.addColorStop(0.5, "#fceabb");
+          textGrad.addColorStop(1, "#d4af37");
+
+          ctx.fillStyle = textGrad;
+          ctx.fillText(this.char, 0, 0);
+          ctx.restore();
+        }
+      }
+
+      let letters = [];
+      function buildTypographyLayout() {
+        letters = [];
+        const isMobile = W < 600;
+
+        const scriptSize = fitFontSize(
+          CONFIG.lines[0],
+          isMobile ? 46 : 64,
+          W * 0.7,
+          24,
+          CONFIG.fontScript,
+        );
+        const serifSize = fitFontSize(
+          CONFIG.lines[1],
+          isMobile ? 30 : 46,
+          W * 0.7,
+          18,
+          CONFIG.fontSerif,
+        );
+        const subSize = fitFontSize(
+          CONFIG.lines[2],
+          isMobile ? 15 : 22,
+          W * 0.75,
+          12,
+          CONFIG.fontSerif,
+        );
+
+        const sizes = [scriptSize, serifSize, subSize];
+        const fonts = [CONFIG.fontScript, CONFIG.fontSerif, CONFIG.fontSerif];
+        const totalHeight = CONFIG.lineGap * 2;
+        const startY = H / 2 - totalHeight / 2 - (isMobile ? 20 : 30);
+
+        CONFIG.lines.forEach((line, lineIdx) => {
+          const fontSize = sizes[lineIdx];
+          const font = fonts[lineIdx];
+          const y = startY + lineIdx * CONFIG.lineGap;
+          ctx.font = `600 ${fontSize}px ${font}`;
+
+          const lineWidth = ctx.measureText(line).width;
+          let cursorX = W / 2 - lineWidth / 2;
+
+          [...line].forEach((char, charIdx) => {
+            const charWidth = ctx.measureText(char).width;
+            if (char !== " ") {
+              const targetX = cursorX + charWidth / 2;
+              const delay = lineIdx * 0.35 + charIdx * 0.04;
+              letters.push(
+                new BezierLetter(char, targetX, y, font, fontSize, delay),
+              );
+            }
+            cursorX += charWidth;
+          });
+        });
+      }
+
+      function initLayouts() {
+        buildTypographyLayout();
+        buildPhotoLayout();
+      }
+
+      window.addEventListener("resize", () => {
+        resizeCanvas();
+        initLayouts();
+      });
+      initLayouts();
+
+      // ---------- STATE CONTROL ----------
+      let appState = "box";
+
+      function triggerOpen() {
+        if (appState !== "box") return;
+        appState = "opening";
+        boxState.opening = true;
+        boxState.shakeIntensity = 1.0;
+        hintEl.style.opacity = 0;
+
+        setTimeout(() => {
+          boxState.lidVX = rand(-100, 100);
+          boxState.lidVY = rand(-400, -300);
+          boxState.lidVRot = rand(-4, 4);
+
+          for (let i = 0; i < 50; i++) {
+            const angle = Math.random() * TAU;
+            const speed = rand(100, 350);
+            particlePool.spawn(
+              W / 2,
+              H / 2,
+              Math.cos(angle) * speed,
+              Math.sin(angle) * speed,
+              rand(2, 4),
+              Math.random() > 0.4 ? "#fceabb" : "#e8a7a1",
+              rand(1.0, 2.0),
+              0.94,
+            );
+          }
+          appState = "animating";
+        }, 400);
+      }
+
+      function resetAll() {
+        appState = "box";
+        boxState.age = 0;
+        boxState.opening = false;
+        boxState.openProgress = 0;
+        boxState.shakeIntensity = 0;
+        boxState.lidX = 0;
+        boxState.lidY = 0;
+        boxState.lidVX = 0;
+        boxState.lidVY = 0;
+        boxState.lidRot = 0;
+        particlePool.clear();
+        letters.forEach((l) => l.reset());
+        photoObjects.forEach((p) => p.reset());
+        hintEl.style.opacity = 1;
+        replayBtn.classList.remove("show");
+      }
+
+      canvas.addEventListener("pointerdown", (e) => {
+        if (appState === "box") {
+          triggerOpen();
+        } else if (appState === "settled") {
+          for (let i = 0; i < 20; i++) {
+            const a = Math.random() * TAU;
+            const spd = rand(50, 180);
+            particlePool.spawn(
+              e.clientX,
+              e.clientY,
+              Math.cos(a) * spd,
+              Math.sin(a) * spd,
+              rand(1.5, 3.5),
+              "#fceabb",
+              rand(0.6, 1.2),
+              0.95,
+              20,
+            );
+          }
+        }
+      });
+
+      replayBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        resetAll();
+      });
+
+      // ---------- MAIN ENGINE LOOP ----------
+      let lastTime = performance.now();
+
+      function renderFrame(now) {
+        requestAnimationFrame(renderFrame);
+
+        const dt = Math.min((now - lastTime) / 1000, 1 / 30);
+        lastTime = now;
+        const time = now / 1000;
+
+        bgEngine.draw(time);
+
+        if (appState === "box" || appState === "opening") {
+          drawGiftBox(dt, time);
+          drawTag(time);
+        }
+
+        if (boxState.opening) {
+          boxState.openProgress = Math.min(1, boxState.openProgress + dt * 1.2);
+          boxState.lidVY += 800 * dt;
+          boxState.lidX += boxState.lidVX * dt;
+          boxState.lidY += boxState.lidVY * dt;
+          boxState.lidRot += boxState.lidVRot * dt;
+        }
+
+        if (appState === "settled") {
+          if (Math.random() < 0.15) {
+            particlePool.spawn(
+              rand(0, W),
+              H + 10,
+              rand(-15, 15),
+              rand(-40, -90),
+              rand(1.5, 4.0),
+              Math.random() > 0.5 ? "#fceabb" : "rgba(212, 175, 55, 0.6)",
+              rand(3.0, 5.0),
+              1.0,
+              -5,
+            );
+          }
+        }
+
+        particlePool.updateAndDraw(dt);
+
+        if (appState === "animating" || appState === "settled") {
+          let allSettled = true;
+
+          // Draw Floating Photos
+          for (let i = 0; i < photoObjects.length; i++) {
+            photoObjects[i].update(dt);
+            photoObjects[i].draw(time);
+            if (photoObjects[i].phase !== "settled") allSettled = false;
+          }
+
+          // Draw Typography
+          for (let i = 0; i < letters.length; i++) {
+            letters[i].update(dt);
+            letters[i].draw(time);
+            if (letters[i].phase !== "settled") allSettled = false;
+          }
+
+          if (allSettled && appState !== "settled") {
+            appState = "settled";
+            replayBtn.classList.add("show");
+          }
+        }
+      }
+
+      requestAnimationFrame(renderFrame);
+    </script>
+  </body>
+</html>
