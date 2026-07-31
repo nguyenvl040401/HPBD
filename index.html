@@ -87,8 +87,8 @@
       .signature {
         position: absolute;
         bottom: 24px;
-        left: 50%; /* 👈 Đưa sang vị trí 50% chiều ngang */
-        transform: translateX(-50%); /* 👈 Căn chính giữa chuẩn xác */
+        left: 50%;
+        transform: translateX(-50%);
         font-family: "Cormorant Garamond", "Noto Serif JP", serif;
         font-size: 13px;
         letter-spacing: 1.5px;
@@ -98,7 +98,7 @@
         font-style: italic;
         transition: opacity 1s ease;
         z-index: 10;
-        white-space: nowrap; /* 👈 Giữ cho dòng chữ không bị nhảy hàng */
+        white-space: nowrap;
       }
       .signature span {
         color: rgba(212, 175, 55, 0.45);
@@ -114,7 +114,7 @@
 
     <script>
       /* ============================================================================
-   CINEMATIC LUXURY BIRTHDAY EXPERIENCE WITH FLOATING GALLERY (FIXED BOX)
+   CINEMATIC LUXURY BIRTHDAY EXPERIENCE WITH FLOATING GALLERY
    ============================================================================ */
 
       const CONFIG = {
@@ -125,7 +125,7 @@
           "Mọi điều tốt đẹp nhất sẽ đến với bạn",
         ],
 
-        // Tối đa 4 ảnh. Nếu không muốn hiện ảnh, hãy để mảng rỗng: images: []
+        // Tối đa 4 ảnh. Nếu thêm ảnh, hãy nhập đường dẫn (VD: ["img1.jpg", "img2.jpg"])
         images: [],
 
         fontScript: "'Dancing Script', cursive",
@@ -308,7 +308,7 @@
       }
       const particlePool = new ParticlePool(500);
 
-      // ---------- 3D GIFT BOX ENGINE (CORRECTED) ----------
+      // ---------- 3D GIFT BOX ENGINE ----------
       const boxState = {
         age: 0,
         opening: false,
@@ -393,7 +393,6 @@
           );
         }
 
-        // Đổ bóng đáy hộp
         const shadowGrad = ctx.createRadialGradient(
           0,
           bSize * 0.55,
@@ -475,7 +474,6 @@
         ctx.fillStyle = ribbonGrad;
         ctx.fillRect(-ribbonW / 2, lidY, ribbonW, lidH);
 
-        // Vẽ nơ 3D trên nắp
         if (boxState.openProgress < 0.8) {
           draw3DBow(0, lidY - 2, ribbonW);
         }
@@ -519,13 +517,13 @@
         ctx.restore();
       }
 
-     // ---------- FLOATING PHOTO GALLERY ENGINE ----------
+      // ---------- FLOATING PHOTO GALLERY ENGINE ----------
       class FloatingPhoto {
         constructor(imgUrl, targetX, targetY, targetRot, delay) {
           this.img = new Image();
-          this.isError = false; // 👈 Thêm biến cờ đánh dấu lỗi
+          this.isError = false;
           this.img.onerror = () => {
-            this.isError = true; // Nếu nạp ảnh lỗi (404), đánh dấu ngay
+            this.isError = true;
           };
           this.img.src = imgUrl;
           this.targetX = targetX;
@@ -589,10 +587,10 @@
         }
 
         draw(time) {
-          // 🔴 ĐÃ SỬA: Bỏ qua nếu đang idle, chưa load xong HOẶC ảnh bị lỗi 404 (naturalWidth === 0)
           if (
             this.phase === "idle" ||
             !this.img.complete ||
+            this.isError ||
             this.img.naturalWidth === 0
           ) {
             return;
@@ -673,6 +671,27 @@
 
           ctx.restore();
         }
+      }
+
+      let photoObjects = [];
+      function buildPhotoLayout() {
+        photoObjects = [];
+        if (!CONFIG.images || CONFIG.images.length === 0) return;
+
+        const isMobile = W < 600;
+        const coords = [
+          { x: W * 0.18, y: H * 0.25, rot: -0.12, delay: 0.2 },
+          { x: W * 0.82, y: H * 0.25, rot: 0.15, delay: 0.4 },
+          { x: W * 0.15, y: H * 0.72, rot: 0.08, delay: 0.6 },
+          { x: W * 0.85, y: H * 0.72, rot: -0.1, delay: 0.8 },
+        ];
+
+        CONFIG.images.slice(0, 4).forEach((imgUrl, i) => {
+          const c = coords[i];
+          photoObjects.push(
+            new FloatingPhoto(imgUrl, c.x, c.y, c.rot, c.delay),
+          );
+        });
       }
 
       // ---------- BEZIER TEXT ENGINE ----------
@@ -975,7 +994,12 @@
             if (letters[i].phase !== "settled") allSettled = false;
           }
 
-          if (allSettled && appState !== "settled") {
+          // Kiểm tra nếu mảng chữ rỗng hoặc tất cả đã hoàn tất
+          if (
+            letters.length > 0 &&
+            allSettled &&
+            appState !== "settled"
+          ) {
             appState = "settled";
             replayBtn.classList.add("show");
           }
