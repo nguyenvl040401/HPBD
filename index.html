@@ -7,7 +7,7 @@
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
     />
     <title>Happy Birthday 🎁</title>
-    <!-- Tắt lỗi Favicon 404 bằng SVG Emoji -->
+    <!-- Favicon SVG Emoji -->
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎁</text></svg>">
     
     <!-- Google Fonts -->
@@ -39,7 +39,7 @@
 
       .hint {
         position: absolute;
-        bottom: 220px;
+        bottom: 180px;
         left: 0;
         right: 0;
         text-align: center;
@@ -54,50 +54,15 @@
         text-shadow: 0 0 12px rgba(212, 175, 55, 0.2);
       }
 
-      /* Fix Responsive vị trí Nút Xem lại */
-      .replay {
-        position: absolute;
-        bottom: 50px;
-        right: 20px;
-        font-family: "Cormorant Garamond", "Noto Serif JP", serif;
-        font-size: 12px;
-        letter-spacing: 2px;
-        text-transform: uppercase;
-        font-weight: 600;
-        color: #e5cb9f;
-        background: rgba(20, 24, 38, 0.65);
-        border: 1px solid rgba(212, 175, 55, 0.35);
-        padding: 8px 18px;
-        border-radius: 40px;
-        backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
-        opacity: 0;
-        pointer-events: none;
-        transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
-        user-select: none;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
-        z-index: 10;
-      }
-      .replay:hover {
-        background: rgba(212, 175, 55, 0.2);
-        border-color: rgba(212, 175, 55, 0.6);
-        box-shadow: 0 0 15px rgba(212, 175, 55, 0.3);
-      }
-      .replay.show {
-        opacity: 1;
-        pointer-events: auto;
-      }
-
-      /* Fix Responsive Chữ Ký Footer */
       .signature {
         position: absolute;
-        bottom: 16px;
+        bottom: 20px;
         left: 50%;
         transform: translateX(-50%);
         font-family: "Cormorant Garamond", "Noto Serif JP", serif;
         font-size: 12px;
         letter-spacing: 1.5px;
-        color: rgba(255, 255, 255, 0.3);
+        color: rgba(255, 255, 255, 0.35);
         pointer-events: none;
         user-select: none;
         font-style: italic;
@@ -106,20 +71,13 @@
         white-space: nowrap;
       }
       .signature span {
-        color: rgba(212, 175, 55, 0.5);
+        color: rgba(212, 175, 55, 0.6);
         font-weight: 600;
       }
 
       @media (max-width: 600px) {
-        .replay {
-          bottom: 48px;
-          right: 50%;
-          transform: translateX(50%); /* Căn giữa nút trên màn hình nhỏ nếu cần, hoặc để góc phải gọn gàng */
-          right: 16px;
-          transform: none;
-        }
         .hint {
-          bottom: 180px;
+          bottom: 150px;
           font-size: 12px;
         }
       }
@@ -128,7 +86,6 @@
   <body>
     <canvas id="c"></canvas>
     <div class="hint" id="hint">✨ Chạm để mở quà ✨</div>
-    <button class="replay" id="replayBtn">↻ Xem lại</button>
     <div class="signature">Crafted by <span>Lăng Nguyên</span></div>
 
     <script>
@@ -169,7 +126,6 @@
       const canvas = document.getElementById("c");
       const ctx = canvas.getContext("2d", { alpha: false });
       const hintEl = document.getElementById("hint");
-      const replayBtn = document.getElementById("replayBtn");
 
       let dpr = 1;
       let W = 0,
@@ -821,8 +777,7 @@
         letters = [];
         const isMobile = W < 600;
 
-        // Tự động điều chỉnh Line Gap hợp lý cho điện thoại
-        const lineGap = isMobile ? 52 : 75;
+        const lineGap = isMobile ? 50 : 75;
 
         const scriptSize = fitFontSize(
           CONFIG.lines[0],
@@ -849,7 +804,7 @@
         const sizes = [scriptSize, serifSize, subSize];
         const fonts = [CONFIG.fontScript, CONFIG.fontSerif, CONFIG.fontSerif];
         const totalHeight = lineGap * 2;
-        const startY = H / 2 - totalHeight / 2 - (isMobile ? 15 : 30);
+        const startY = H / 2 - totalHeight / 2 - (isMobile ? 10 : 30);
 
         CONFIG.lines.forEach((line, lineIdx) => {
           const fontSize = sizes[lineIdx];
@@ -918,24 +873,6 @@
         }, 400);
       }
 
-      function resetAll() {
-        appState = "box";
-        boxState.age = 0;
-        boxState.opening = false;
-        boxState.openProgress = 0;
-        boxState.shakeIntensity = 0;
-        boxState.lidX = 0;
-        boxState.lidY = 0;
-        boxState.lidVX = 0;
-        boxState.lidVY = 0;
-        boxState.lidRot = 0;
-        particlePool.clear();
-        letters.forEach((l) => l.reset());
-        photoObjects.forEach((p) => p.reset());
-        hintEl.style.opacity = 1;
-        replayBtn.classList.remove("show");
-      }
-
       canvas.addEventListener("pointerdown", (e) => {
         if (appState === "box") {
           triggerOpen();
@@ -956,11 +893,6 @@
             );
           }
         }
-      });
-
-      replayBtn.addEventListener("click", (e) => {
-        e.stopPropagation();
-        resetAll();
       });
 
       // ---------- MAIN ENGINE LOOP ----------
@@ -1009,14 +941,12 @@
         if (appState === "animating" || appState === "settled") {
           let allSettled = true;
 
-          // Draw Floating Photos
           for (let i = 0; i < photoObjects.length; i++) {
             photoObjects[i].update(dt);
             photoObjects[i].draw(time);
             if (photoObjects[i].phase !== "settled") allSettled = false;
           }
 
-          // Draw Typography
           for (let i = 0; i < letters.length; i++) {
             letters[i].update(dt);
             letters[i].draw(time);
@@ -1029,7 +959,6 @@
             appState !== "settled"
           ) {
             appState = "settled";
-            replayBtn.classList.add("show");
           }
         }
       }
