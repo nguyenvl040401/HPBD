@@ -7,7 +7,10 @@
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
     />
     <title>Happy Birthday 🎁</title>
-    <!-- Google Fonts: Cormorant Garamond, Dancing Script, Noto Serif JP -->
+    <!-- Tắt lỗi Favicon 404 bằng SVG Emoji -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎁</text></svg>">
+    
+    <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -36,7 +39,7 @@
 
       .hint {
         position: absolute;
-        bottom: 240px;
+        bottom: 220px;
         left: 0;
         right: 0;
         text-align: center;
@@ -51,19 +54,20 @@
         text-shadow: 0 0 12px rgba(212, 175, 55, 0.2);
       }
 
+      /* Fix Responsive vị trí Nút Xem lại */
       .replay {
         position: absolute;
-        bottom: 24px;
-        right: 28px;
+        bottom: 50px;
+        right: 20px;
         font-family: "Cormorant Garamond", "Noto Serif JP", serif;
-        font-size: 13px;
+        font-size: 12px;
         letter-spacing: 2px;
         text-transform: uppercase;
         font-weight: 600;
         color: #e5cb9f;
-        background: rgba(20, 24, 38, 0.4);
-        border: 1px solid rgba(212, 175, 55, 0.3);
-        padding: 8px 22px;
+        background: rgba(20, 24, 38, 0.65);
+        border: 1px solid rgba(212, 175, 55, 0.35);
+        padding: 8px 18px;
         border-radius: 40px;
         backdrop-filter: blur(12px);
         -webkit-backdrop-filter: blur(12px);
@@ -75,7 +79,7 @@
         z-index: 10;
       }
       .replay:hover {
-        background: rgba(212, 175, 55, 0.15);
+        background: rgba(212, 175, 55, 0.2);
         border-color: rgba(212, 175, 55, 0.6);
         box-shadow: 0 0 15px rgba(212, 175, 55, 0.3);
       }
@@ -84,15 +88,16 @@
         pointer-events: auto;
       }
 
+      /* Fix Responsive Chữ Ký Footer */
       .signature {
         position: absolute;
-        bottom: 24px;
+        bottom: 16px;
         left: 50%;
         transform: translateX(-50%);
         font-family: "Cormorant Garamond", "Noto Serif JP", serif;
-        font-size: 13px;
+        font-size: 12px;
         letter-spacing: 1.5px;
-        color: rgba(255, 255, 255, 0.25);
+        color: rgba(255, 255, 255, 0.3);
         pointer-events: none;
         user-select: none;
         font-style: italic;
@@ -101,12 +106,24 @@
         white-space: nowrap;
       }
       .signature span {
-        color: rgba(212, 175, 55, 0.45);
+        color: rgba(212, 175, 55, 0.5);
         font-weight: 600;
       }
+
+      @media (max-width: 600px) {
+        .replay {
+          bottom: 48px;
+          right: 50%;
+          transform: translateX(50%); /* Căn giữa nút trên màn hình nhỏ nếu cần, hoặc để góc phải gọn gàng */
+          right: 16px;
+          transform: none;
+        }
+        .hint {
+          bottom: 180px;
+          font-size: 12px;
+        }
+      }
     </style>
-    <!-- Thêm dòng này vào trong thẻ <head> -->
-<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎁</text></svg>">
   </head>
   <body>
     <canvas id="c"></canvas>
@@ -127,14 +144,11 @@
           "Mọi điều tốt đẹp nhất sẽ đến với bạn",
         ],
 
-        // Thêm đường dẫn ảnh vào mảng nếu muốn hiển thị ảnh gallery (Tối đa 4 ảnh)
-        // VD: images: ["img1.jpg", "img2.jpg"]
         images: [],
 
         fontScript: "'Dancing Script', cursive",
         fontSerif: "'Cormorant Garamond', 'Noto Serif JP', serif",
         baseCharSize: 56,
-        lineGap: 75,
 
         palette: {
           bgTop: "#03050a",
@@ -146,7 +160,7 @@
           champagne: "#f5e5c9",
         },
 
-        boxSize: 120,
+        boxSize: 110,
         starCount: 120,
       };
 
@@ -194,7 +208,7 @@
         text,
         baseSize,
         maxWidth,
-        minSize = 14,
+        minSize = 12,
         font = CONFIG.fontSerif,
       ) {
         let size = baseSize;
@@ -379,9 +393,10 @@
 
         const floatOffset = Math.sin(boxState.age * 1.5) * 6;
         const breatheScale = 1 + Math.sin(boxState.age * 2.0) * 0.012;
-        const bSize = CONFIG.boxSize * breatheScale;
+        const isMobile = W < 600;
+        const bSize = (isMobile ? 100 : CONFIG.boxSize) * breatheScale;
         const cx = W / 2;
-        const cy = H / 2 + 30 + floatOffset;
+        const cy = H / 2 + 20 + floatOffset;
 
         ctx.save();
         ctx.translate(cx, cy);
@@ -487,7 +502,8 @@
       function drawTag(time) {
         if (boxState.opening) return;
         const swing = Math.sin(time * 1.2) * 0.08;
-        const cx = W / 2 + CONFIG.boxSize * 0.38,
+        const isMobile = W < 600;
+        const cx = W / 2 + (isMobile ? 38 : 45),
           cy = H / 2 - 10;
 
         ctx.save();
@@ -498,15 +514,15 @@
         ctx.lineWidth = 1;
         ctx.beginPath();
         ctx.moveTo(0, 0);
-        ctx.lineTo(0, 35);
+        ctx.lineTo(0, 30);
         ctx.stroke();
 
-        ctx.font = `600 13px ${CONFIG.fontSerif}`;
+        ctx.font = `600 12px ${CONFIG.fontSerif}`;
         const textW = ctx.measureText(CONFIG.recipientName).width;
-        const tagW = Math.max(90, textW + 40),
-          tagH = 34,
+        const tagW = Math.max(80, textW + 30),
+          tagH = 30,
           tx = -tagW / 2,
-          ty = 35;
+          ty = 30;
 
         ctx.fillStyle = "rgba(18, 22, 34, 0.9)";
         drawRoundedRect(tx, ty, tagW, tagH, 6);
@@ -613,12 +629,12 @@
           }
 
           const isMobile = W < 600;
-          const pw = isMobile ? 85 : 125;
-          const ph = isMobile ? 105 : 155;
-          const pad = isMobile ? 5 : 8;
+          const pw = isMobile ? 75 : 125;
+          const ph = isMobile ? 95 : 155;
+          const pad = isMobile ? 4 : 8;
 
           ctx.shadowColor = "rgba(212, 175, 55, 0.35)";
-          ctx.shadowBlur = 20;
+          ctx.shadowBlur = 15;
           ctx.globalAlpha = this.alpha;
 
           const frameGrad = ctx.createLinearGradient(
@@ -632,7 +648,7 @@
           frameGrad.addColorStop(1, "#8a640f");
 
           ctx.fillStyle = frameGrad;
-          drawRoundedRect(-pw / 2, -ph / 2, pw, ph, 10);
+          drawRoundedRect(-pw / 2, -ph / 2, pw, ph, 8);
           ctx.fill();
 
           ctx.shadowBlur = 0;
@@ -641,8 +657,8 @@
             -pw / 2 + pad,
             -ph / 2 + pad,
             pw - pad * 2,
-            ph - pad * 2 - 15,
-            6,
+            ph - pad * 2 - 12,
+            5,
           );
           ctx.clip();
           ctx.drawImage(
@@ -650,7 +666,7 @@
             -pw / 2 + pad,
             -ph / 2 + pad,
             pw - pad * 2,
-            ph - pad * 2 - 15,
+            ph - pad * 2 - 12,
           );
           ctx.restore();
 
@@ -667,8 +683,8 @@
             -pw / 2 + pad,
             -ph / 2 + pad,
             pw - pad * 2,
-            ph - pad * 2 - 15,
-            6,
+            ph - pad * 2 - 12,
+            5,
           );
           ctx.fill();
 
@@ -681,12 +697,20 @@
         photoObjects = [];
         if (!CONFIG.images || CONFIG.images.length === 0) return;
 
-        const coords = [
-          { x: W * 0.18, y: H * 0.25, rot: -0.12, delay: 0.2 },
-          { x: W * 0.82, y: H * 0.25, rot: 0.15, delay: 0.4 },
-          { x: W * 0.15, y: H * 0.72, rot: 0.08, delay: 0.6 },
-          { x: W * 0.85, y: H * 0.72, rot: -0.1, delay: 0.8 },
-        ];
+        const isMobile = W < 600;
+        const coords = isMobile
+          ? [
+              { x: W * 0.22, y: H * 0.18, rot: -0.1, delay: 0.2 },
+              { x: W * 0.78, y: H * 0.18, rot: 0.12, delay: 0.4 },
+              { x: W * 0.2, y: H * 0.82, rot: 0.08, delay: 0.6 },
+              { x: W * 0.8, y: H * 0.82, rot: -0.1, delay: 0.8 },
+            ]
+          : [
+              { x: W * 0.18, y: H * 0.25, rot: -0.12, delay: 0.2 },
+              { x: W * 0.82, y: H * 0.25, rot: 0.15, delay: 0.4 },
+              { x: W * 0.15, y: H * 0.72, rot: 0.08, delay: 0.6 },
+              { x: W * 0.85, y: H * 0.72, rot: -0.1, delay: 0.8 },
+            ];
 
         CONFIG.images.slice(0, 4).forEach((imgUrl, i) => {
           const c = coords[i];
@@ -797,37 +821,40 @@
         letters = [];
         const isMobile = W < 600;
 
+        // Tự động điều chỉnh Line Gap hợp lý cho điện thoại
+        const lineGap = isMobile ? 52 : 75;
+
         const scriptSize = fitFontSize(
           CONFIG.lines[0],
-          isMobile ? 46 : 64,
-          W * 0.7,
-          24,
+          isMobile ? 38 : 64,
+          W * 0.85,
+          20,
           CONFIG.fontScript,
         );
         const serifSize = fitFontSize(
           CONFIG.lines[1],
-          isMobile ? 30 : 46,
-          W * 0.7,
-          18,
+          isMobile ? 26 : 46,
+          W * 0.85,
+          16,
           CONFIG.fontSerif,
         );
         const subSize = fitFontSize(
           CONFIG.lines[2],
-          isMobile ? 15 : 22,
-          W * 0.75,
-          12,
+          isMobile ? 13 : 22,
+          W * 0.85,
+          11,
           CONFIG.fontSerif,
         );
 
         const sizes = [scriptSize, serifSize, subSize];
         const fonts = [CONFIG.fontScript, CONFIG.fontSerif, CONFIG.fontSerif];
-        const totalHeight = CONFIG.lineGap * 2;
-        const startY = H / 2 - totalHeight / 2 - (isMobile ? 20 : 30);
+        const totalHeight = lineGap * 2;
+        const startY = H / 2 - totalHeight / 2 - (isMobile ? 15 : 30);
 
         CONFIG.lines.forEach((line, lineIdx) => {
           const fontSize = sizes[lineIdx];
           const font = fonts[lineIdx];
-          const y = startY + lineIdx * CONFIG.lineGap;
+          const y = startY + lineIdx * lineGap;
           ctx.font = `600 ${fontSize}px ${font}`;
 
           const lineWidth = ctx.measureText(line).width;
