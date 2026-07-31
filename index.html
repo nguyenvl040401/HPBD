@@ -501,19 +501,23 @@
 
       // ---------- FLOATING PHOTO GALLERY ENGINE ----------
       class FloatingPhoto {
-        constructor(imgUrl, targetX, targetY, targetRot, delay) {
-          this.img = new Image();
-          this.isError = false;
-          this.img.onerror = () => {
-            this.isError = true;
-          };
-          this.img.src = imgUrl;
-          this.targetX = targetX;
-          this.targetY = targetY;
-          this.targetRot = targetRot;
-          this.delay = delay;
-          this.reset();
-        }
+  constructor(imgUrl, targetX, targetY, targetRot, delay) {
+    this.img = new Image();
+    // 🔴 BẮT BUỘC: Thêm dòng này để duyệt qua CORS khi vẽ lên Canvas
+    this.img.crossOrigin = "Anonymous";
+    
+    this.isError = false;
+    this.img.onerror = () => {
+      this.isError = true;
+      console.warn("Không thể tải ảnh:", imgUrl);
+    };
+    this.img.src = imgUrl;
+    this.targetX = targetX;
+    this.targetY = targetY;
+    this.targetRot = targetRot;
+    this.delay = delay;
+    this.reset();
+  }
 
         reset() {
           this.phase = "idle";
