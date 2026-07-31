@@ -524,7 +524,7 @@
         ctx.restore();
       }
 
-      // ---------- FLOATING PHOTO GALLERY ENGINE ----------
+     // ---------- FLOATING PHOTO GALLERY ENGINE ----------
       class FloatingPhoto {
         constructor(imgUrl, targetX, targetY, targetRot, delay) {
           this.img = new Image();
@@ -590,7 +590,14 @@
         }
 
         draw(time) {
-          if (this.phase === "idle" || !this.img.complete) return;
+          // 🔴 ĐÃ SỬA: Bỏ qua nếu đang idle, chưa load xong HOẶC ảnh bị lỗi 404 (naturalWidth === 0)
+          if (
+            this.phase === "idle" ||
+            !this.img.complete ||
+            this.img.naturalWidth === 0
+          ) {
+            return;
+          }
 
           ctx.save();
           ctx.translate(this.currentPos.x, this.currentPos.y);
@@ -667,47 +674,6 @@
 
           ctx.restore();
         }
-      }
-
-      let photoObjects = [];
-      function buildPhotoLayout() {
-        photoObjects = [];
-        const urls = CONFIG.images.slice(0, 4);
-        if (urls.length === 0) return;
-
-        const isMobile = W < 600;
-        const cx = W / 2;
-        const cy = H / 2;
-
-        const positions = [
-          {
-            x: cx - (isMobile ? W * 0.36 : 320),
-            y: cy - (isMobile ? 140 : 160),
-            rot: -0.12,
-          },
-          {
-            x: cx + (isMobile ? W * 0.36 : 320),
-            y: cy - (isMobile ? 140 : 160),
-            rot: 0.12,
-          },
-          {
-            x: cx - (isMobile ? W * 0.34 : 300),
-            y: cy + (isMobile ? 120 : 140),
-            rot: 0.08,
-          },
-          {
-            x: cx + (isMobile ? W * 0.34 : 300),
-            y: cy + (isMobile ? 120 : 140),
-            rot: -0.08,
-          },
-        ];
-
-        urls.forEach((url, i) => {
-          const pos = positions[i % positions.length];
-          photoObjects.push(
-            new FloatingPhoto(url, pos.x, pos.y, pos.rot, 0.2 + i * 0.25),
-          );
-        });
       }
 
       // ---------- BEZIER TEXT ENGINE ----------
